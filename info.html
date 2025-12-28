@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Device Identifier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 700px;
+      margin: auto;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .row {
+      margin-bottom: 10px;
+    }
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+    pre {
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🖥️ Device Information</h1>
+
+<div class="card" id="output">
+  <p>Loading device details…</p>
+</div>
+
+<script>
+async function getDeviceIdentifier() {
+  // 1️⃣ Persistent ID
+  let storedId = localStorage.getItem("device_id");
+  if (!storedId) {
+    storedId = crypto.randomUUID();
+    localStorage.setItem("device_id", storedId);
+  }
+
+  // 2️⃣ Browser signals
+  const fingerprintData = {
+    userAgent: navigator.userAgent,
+    language: navigator.language,
+    platform: navigator.platform,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
+    cores: navigator.hardwareConcurrency || "unknown",
+    memory: navigator.deviceMemory || "unknown",
+    touch: navigator.maxTouchPoints || 0
+  };
+
+  // 3️⃣ Hash fingerprint
+  const encoder = new TextEncoder();
+  const data = encoder.encode(JSON.stringify(fingerprintData));
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const fingerprintHash = Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  // 4️⃣ IP info
+  let ipInfo = {};
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    ipInfo = await res.json();
+  } catch {
+    ipInfo = {};
+  }
+
+  return {
+    device_id: storedId,
+    fingerprint: fingerprintHash,
+    browser: fingerprintData,
+    ip: ipInfo.ip || "N/A",
+    city: ipInfo.city || "N/A",
+    country: ipInfo.country_name || "N/A",
+    isp: ipInfo.org || "N/A"
+  };
+}
+
+getDeviceIdentifier().then(device => {
+  document.getElementById("output").innerHTML = `
+    <div class="row"><span class="label">Device ID:</span> ${device.device_id}</div>
+    <div class="row"><span class="label">Fingerprint (SHA-256):</span><br>${device.fingerprint}</div>
+    <div class="row"><span class="label">IP Address:</span> ${device.ip}</div>
+    <div class="row"><span class="label">City:</span> ${device.city}</div>
+    <div class="row"><span class="label">Country:</span> ${device.country}</div>
+    <div class="row"><span class="label">ISP:</span> ${device.isp}</div>
+
+    <div class="row">
+      <span class="label">Browser & Device Data:</span>
+      <pre>${JSON.stringify(device.browser, null, 2)}</pre>
+    </div>
+  `;
+});
+</script>
+
+</body>
+</html>
