@@ -1,4 +1,4 @@
-<script>
+
 (function () {
 
   /* ------------------------------
@@ -100,6 +100,4 @@
   });
 
 })();
-</script>
 
-<!-- End of Analytics Script -->
