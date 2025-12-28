@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Visitor Identifiers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fa;
+      padding: 24px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .card {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    .row {
+      margin-bottom: 14px;
+    }
+    .label {
+      font-weight: 600;
+      color: #444;
+    }
+    .value {
+      margin-top: 4px;
+      word-break: break-all;
+      color: #222;
+    }
+    .muted {
+      color: #777;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🔍 Visitor Details</h1>
+
+<div class="card" id="output">
+  <p class="muted">Loading identifiers…</p>
+</div>
+
+<script>
+async function getIdentifiers() {
+
+  /* ------------------------------
+     SESSION START (per tab load)
+     ------------------------------ */
+  const session_started_at = new Date().toISOString();
+
+  /* ------------------------------
+     DEVICE ID (deterministic)
+     ------------------------------ */
+  const device_id = [
+    navigator.userAgent,
+    navigator.platform,
+    navigator.language,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    screen.width,
+    screen.height,
+    screen.colorDepth,
+    navigator.hardwareConcurrency || "na",
+    navigator.deviceMemory || "na"
+  ].join("|");
+
+  /* ------------------------------
+     VISITOR ID (persistent)
+     ------------------------------ */
+  let visitor_id = localStorage.getItem("visitor_id");
+
+  if (!visitor_id) {
+    visitor_id =
+      "v_" +
+      Date.now().toString(36) +
+      Math.random().toString(36).slice(2, 10);
+
+    localStorage.setItem("visitor_id", visitor_id);
+  }
+
+  /* ------------------------------
+     CITY (IP-based)
+     ------------------------------ */
+  let city = null;
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+    city = data.city || null;
+  } catch {
+    city = null;
+  }
+
+  return {
+    device_id,
+    visitor_id,
+    city,
+    session_started_at
+  };
+}
+
+/* ✅ Render on page */
+getIdentifiers().then(info => {
+  document.getElementById("output").innerHTML = `
+    <div class="row">
+      <div class="label">Visitor ID</div>
+      <div class="value">${info.visitor_id}</div>
+    </div>
+
+    <div class="row">
+      <div class="label">Device ID (deterministic)</div>
+      <div class="value">${info.device_id}</div>
+    </div>
+
+    <div class="row">
+      <div class="label">City (IP-based)</div>
+      <div class="value">${info.city ?? "Unavailable"}</div>
+    </div>
+
+    <div class="row">
+      <div class="label">Session Started At</div>
+      <div class="value">${info.session_started_at}</div>
+    </div>
+  `;
+});
+</script>
+
+</body>
+</html>
