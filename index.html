@@ -2,90 +2,153 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Analytics Preview</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebDA – Analytics Demo</title>
 
   <style>
     body {
+      margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f3f4f6;
-      padding: 24px;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 12px;
-    }
-    .card {
-      max-width: 720px;
-      margin: auto;
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-    }
-    .status {
-      text-align: center;
-      font-size: 14px;
-      color: #555;
-      margin-bottom: 12px;
-    }
-    .dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: #16a34a;
-      border-radius: 50%;
-      margin-right: 6px;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0% { opacity: 0.3 }
-      50% { opacity: 1 }
-      100% { opacity: 0.3 }
-    }
-    pre {
-      background: #020617;
+      background: #0f172a;
       color: #e5e7eb;
-      padding: 16px;
-      border-radius: 10px;
-      overflow-x: auto;
-      font-size: 13px;
+      line-height: 1.6;
     }
+
+    header {
+      background: #020617;
+      padding: 20px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #38bdf8;
+    }
+
+    nav a {
+      margin-right: 16px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    nav a:hover {
+      color: #38bdf8;
+    }
+
+    section {
+      padding: 60px 32px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    section h2 {
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+      color: #f8fafc;
+    }
+
+    .card {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 24px;
+    }
+
     footer {
       text-align: center;
-      margin-top: 18px;
-      font-size: 13px;
-      color: #777;
+      padding: 32px;
+      font-size: 0.85rem;
+      color: #64748b;
+      border-top: 1px solid #1e293b;
     }
   </style>
 </head>
+
 <body>
 
-<h1>📊 Analytics Heartbeat</h1>
+  <header>
+    <h1>WebDA Analytics</h1>
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+  </header>
 
-<div class="card">
-  <div class="status">
-    <span class="dot"></span>
-    Sending heartbeat every <strong>10 seconds</strong>
-  </div>
+  <section id="home">
+    <h2>Advanced Website Analytics</h2>
+    <p>
+      This page is actively tracked using a lightweight, privacy-friendly
+      analytics script built with pure JavaScript.
+    </p>
 
-  <pre id="preview">Waiting for first heartbeat…</pre>
-</div>
+    <div class="card">
+      <strong>Tracked Automatically:</strong>
+      <ul>
+        <li>Visitor ID (browser-persistent)</li>
+        <li>Session start time</li>
+        <li>Heartbeat every 10 seconds</li>
+        <li>Page URL changes</li>
+        <li>City (IP-based, once per session)</li>
+      </ul>
+    </div>
+  </section>
 
-<footer>
-  Data collected locally · Silent backend delivery
-</footer>
+  <section id="features">
+    <h2>Why This Matters</h2>
+    <p>
+      This analytics approach is designed for:
+    </p>
 
-<script>
+    <div class="card">
+      <ul>
+        <li>No cookies required</li>
+        <li>No external libraries</li>
+        <li>Minimal CPU & memory usage</li>
+        <li>Server-side aggregation ready</li>
+        <li>Scales well on low-resource servers</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <h2>Simple & Efficient</h2>
+    <p>
+      Ideal for startups, dashboards, internal tools, and SaaS products.
+    </p>
+
+    <div class="card">
+      <p>
+        Open DevTools → Network tab → wait 10 seconds  
+        You’ll see analytics requests being sent automatically.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    © 2025 WebDA Analytics Demo
+  </footer>
+
+  <!-- ==============================
+       ANALYTICS SCRIPT (YOUR CODE)
+       ============================== -->
+  <script>
+  
 (function () {
+
   /* ------------------------------
      CONFIG
      ------------------------------ */
-  const API_ENDPOINT = "https://your-api.com/collect";
-  const analytics_HEARTBEAT_INTERVAL = 10_000;
+  const API_ENDPOINT = "https://webda.onrender.com/siteanalysis/enqueue"; // unchanged
+  const analytics_HEARTBEAT_INTERVAL = 10_000; // 10 seconds
 
   /* ------------------------------
-     VISITOR ID
+     VISITOR ID (cached per browser)
      ------------------------------ */
   function analytics_generateVisitorId() {
     return (
@@ -114,7 +177,7 @@
   }
 
   /* ------------------------------
-     CITY (once per session)
+     CITY (fetch once per session)
      ------------------------------ */
   let analytics_city = null;
 
@@ -124,13 +187,14 @@
         cache: "no-store",
         mode: "cors"
       });
+
       if (res.ok) {
         const data = await res.json();
         analytics_city =
           typeof data.city === "string" ? data.city : null;
       }
     } catch {
-      analytics_city = null;
+      analytics_city = null; // VPN / ad blocker / network issue
     }
   })();
 
@@ -145,23 +209,40 @@
       session_started_at: analytics_session_started_at
     };
 
-    /* Preview on screen */
-    document.getElementById("preview").textContent =
-      JSON.stringify(analytics_payload, null, 2);
-
-    /* Silent backend send */
     fetch(API_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(analytics_payload),
       keepalive: true
-    }).catch(() => {});
+    }).catch(() => {
+      /* silent failure */
+    });
 
   }, analytics_HEARTBEAT_INTERVAL);
+
+  /* ------------------------------
+     FINAL SEND ON PAGE EXIT
+     ------------------------------ */
+  window.addEventListener("pagehide", () => {
+    const analytics_payload = {
+      visitor_id: analytics_visitor_id,
+      city: analytics_city,
+      current_url: analytics_getCurrentUrl(),
+      session_started_at: analytics_session_started_at
+    };
+
+    navigator.sendBeacon(
+      API_ENDPOINT,
+      JSON.stringify(analytics_payload)
+    );
+  });
+
 })();
-</script>
 
 
-<script src="track.js"></script>
+  </script>
+
 </body>
 </html>
