@@ -2,82 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Analytics Preview</title>
+  <title>Analytics Heartbeat Demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f3f4f6;
+      background: #f4f6f8;
       padding: 24px;
     }
     h1 {
       text-align: center;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .card {
-      max-width: 720px;
+      max-width: 700px;
       margin: auto;
-      background: #ffffff;
+      background: #fff;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
     }
     .status {
       text-align: center;
       font-size: 14px;
-      color: #555;
-      margin-bottom: 12px;
-    }
-    .dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: #16a34a;
-      border-radius: 50%;
-      margin-right: 6px;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0% { opacity: 0.3 }
-      50% { opacity: 1 }
-      100% { opacity: 0.3 }
+      color: #666;
+      margin-bottom: 14px;
     }
     pre {
-      background: #020617;
+      background: #0f172a;
       color: #e5e7eb;
       padding: 16px;
-      border-radius: 10px;
+      border-radius: 8px;
       overflow-x: auto;
       font-size: 13px;
     }
-    footer {
-      text-align: center;
-      margin-top: 18px;
-      font-size: 13px;
-      color: #777;
+    .pulse {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+      margin-right: 6px;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
     }
   </style>
 </head>
 <body>
 
-<h1>📊 Analytics Heartbeat</h1>
+<h1>📡 Analytics Heartbeat</h1>
 
 <div class="card">
   <div class="status">
-    <span class="dot"></span>
+    <span class="pulse"></span>
     Sending heartbeat every <strong>10 seconds</strong>
   </div>
 
-  <pre id="preview">Waiting for first heartbeat…</pre>
+  <pre id="payload">Waiting for first heartbeat…</pre>
 </div>
-
-<footer>
-  Data collected locally · Silent backend delivery
-</footer>
 
 <script>
 (function () {
+
   /* ------------------------------
      CONFIG
      ------------------------------ */
@@ -114,7 +105,7 @@
   }
 
   /* ------------------------------
-     CITY (once per session)
+     CITY (once)
      ------------------------------ */
   let analytics_city = null;
 
@@ -126,8 +117,7 @@
       });
       if (res.ok) {
         const data = await res.json();
-        analytics_city =
-          typeof data.city === "string" ? data.city : null;
+        analytics_city = typeof data.city === "string" ? data.city : null;
       }
     } catch {
       analytics_city = null;
@@ -142,14 +132,15 @@
       visitor_id: analytics_visitor_id,
       city: analytics_city,
       current_url: analytics_getCurrentUrl(),
-      session_started_at: analytics_session_started_at
+      session_started_at: analytics_session_started_at,
+      last_heartbeat_at: new Date().toISOString()
     };
 
-    /* Preview on screen */
-    document.getElementById("preview").textContent =
+    /* Display payload on page */
+    document.getElementById("payload").textContent =
       JSON.stringify(analytics_payload, null, 2);
 
-    /* Silent backend send */
+    /* Send to backend */
     fetch(API_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -158,6 +149,7 @@
     }).catch(() => {});
 
   }, analytics_HEARTBEAT_INTERVAL);
+
 })();
 </script>
 
