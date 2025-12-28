@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Visitor & Device Identifiers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f4f6f9;
+      padding: 24px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .card {
+      max-width: 520px;
+      margin: auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+    .item {
+      margin-bottom: 16px;
+    }
+    .label {
+      font-size: 13px;
+      color: #666;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .value {
+      font-size: 15px;
+      color: #222;
+      word-break: break-all;
+      background: #f1f3f5;
+      padding: 8px;
+      border-radius: 6px;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🆔 Visitor Details</h1>
+
+<div class="card" id="output">
+  Loading identifiers…
+</div>
+
+<div class="footer">
+  Data generated locally in your browser
+</div>
+
+<script>
+async function getIdentifiers() {
+
+  /* ------------------------------
+     SESSION START (per page load)
+     ------------------------------ */
+  const session_started_at = new Date().toISOString();
+
+  /* ------------------------------
+     DEVICE ID (STABLE)
+     ------------------------------ */
+  let device_id = localStorage.getItem("device_id");
+
+  if (!device_id) {
+    device_id =
+      "d_" +
+      navigator.platform +
+      "_" +
+      screen.width +
+      "x" +
+      screen.height +
+      "_" +
+      Date.now().toString(36);
+
+    localStorage.setItem("device_id", device_id);
+  }
+
+  /* ------------------------------
+     VISITOR ID (persistent user)
+     ------------------------------ */
+  let visitor_id = localStorage.getItem("visitor_id");
+
+  if (!visitor_id) {
+    visitor_id =
+      "v_" +
+      Date.now().toString(36) +
+      Math.random().toString(36).slice(2, 10);
+
+    localStorage.setItem("visitor_id", visitor_id);
+  }
+
+  /* ------------------------------
+     CITY (IP-based)
+     ------------------------------ */
+  let city = null;
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+    city = data.city || null;
+  } catch {
+    city = null;
+  }
+
+  return {
+    device_id,
+    visitor_id,
+    city,
+    session_started_at
+  };
+}
+
+/* Render to page */
+getIdentifiers().then(info => {
+  document.getElementById("output").innerHTML = `
+    <div class="item">
+      <div class="label">Visitor ID</div>
+      <div class="value">${info.visitor_id}</div>
+    </div>
+
+    <div class="item">
+      <div class="label">Device ID</div>
+      <div class="value">${info.device_id}</div>
+    </div>
+
+    <div class="item">
+      <div class="label">City (IP-based)</div>
+      <div class="value">${info.city ?? "Unavailable"}</div>
+    </div>
+
+    <div class="item">
+      <div class="label">Session Started At</div>
+      <div class="value">${info.session_started_at}</div>
+    </div>
+  `;
+});
+</script>
+
+</body>
+</html>
