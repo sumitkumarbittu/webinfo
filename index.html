@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Analytics Heartbeat Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f4f6f8;
+      padding: 24px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .card {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    .status {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 14px;
+    }
+    pre {
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+    }
+    .pulse {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+      margin-right: 6px;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>📡 Analytics Heartbeat</h1>
+
+<div class="card">
+  <div class="status">
+    <span class="pulse"></span>
+    Sending heartbeat every <strong>10 seconds</strong>
+  </div>
+
+  <pre id="payload">Waiting for first heartbeat…</pre>
+</div>
+
+<script>
+(function () {
+
+  /* ------------------------------
+     CONFIG
+     ------------------------------ */
+  const API_ENDPOINT = "https://your-api.com/collect";
+  const analytics_HEARTBEAT_INTERVAL = 10_000;
+
+  /* ------------------------------
+     VISITOR ID
+     ------------------------------ */
+  function analytics_generateVisitorId() {
+    return (
+      "V" +
+      Date.now().toString(36).slice(-4).toUpperCase() +
+      Math.random().toString(36).slice(2, 6).toUpperCase()
+    );
+  }
+
+  let analytics_visitor_id = localStorage.getItem("visitor_id");
+  if (!analytics_visitor_id) {
+    analytics_visitor_id = analytics_generateVisitorId();
+    localStorage.setItem("visitor_id", analytics_visitor_id);
+  }
+
+  /* ------------------------------
+     SESSION START
+     ------------------------------ */
+  const analytics_session_started_at = new Date().toISOString();
+
+  /* ------------------------------
+     CURRENT URL
+     ------------------------------ */
+  function analytics_getCurrentUrl() {
+    return window.location.href;
+  }
+
+  /* ------------------------------
+     CITY (once)
+     ------------------------------ */
+  let analytics_city = null;
+
+  (async function analytics_fetchCityOnce() {
+    try {
+      const res = await fetch("https://ipapi.co/json/", {
+        cache: "no-store",
+        mode: "cors"
+      });
+      if (res.ok) {
+        const data = await res.json();
+        analytics_city = typeof data.city === "string" ? data.city : null;
+      }
+    } catch {
+      analytics_city = null;
+    }
+  })();
+
+  /* ------------------------------
+     HEARTBEAT LOOP
+     ------------------------------ */
+  setInterval(() => {
+    const analytics_payload = {
+      visitor_id: analytics_visitor_id,
+      city: analytics_city,
+      current_url: analytics_getCurrentUrl(),
+      session_started_at: analytics_session_started_at,
+      last_heartbeat_at: new Date().toISOString()
+    };
+
+    /* Display payload on page */
+    document.getElementById("payload").textContent =
+      JSON.stringify(analytics_payload, null, 2);
+
+    /* Send to backend */
+    fetch(API_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(analytics_payload),
+      keepalive: true
+    }).catch(() => {});
+
+  }, analytics_HEARTBEAT_INTERVAL);
+
+})();
+</script>
+
+</body>
+</html>
