@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>High Precision Clock</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #1e1e2f, #0b0b14);
+      color: #fff;
+    }
+
+    .clock {
+      font-size: 4rem;
+      letter-spacing: 0.08em;
+      padding: 30px 50px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+
+    .ms {
+      font-size: 1.5rem;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="clock" id="clock">
+    --:--:--.<span class="ms">---</span>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      const ss = String(now.getSeconds()).padStart(2, "0");
+      const ms = String(now.getMilliseconds()).padStart(3, "0");
+
+      document.getElementById("clock").innerHTML =
+        `${hh}:${mm}:${ss}.<span class="ms">${ms}</span>`;
+
+      requestAnimationFrame(updateClock);
+    }
+
+    updateClock();
+  </script>
+
+</body>
+</html>
