@@ -21,6 +21,10 @@
 
   <link rel="icon" href="clock.png" type="image/png">
 
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+
+
 <style>
   :root {
     --bg: #ffffff;
@@ -258,6 +262,10 @@ document.addEventListener("pointerdown", () => {
   }
   lastTap = now;
 });
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
 </script>
 
 </body>
