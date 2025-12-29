@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Analytics Frontend Preview</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 24px;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+
+    .card {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 16px;
+      max-width: 800px;
+    }
+
+    pre {
+      background: #020617;
+      color: #22c55e;
+      padding: 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 14px;
+    }
+
+    .meta {
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #1e293b;
+      font-size: 12px;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📊 Frontend Analytics Preview (No Data Sent)</h1>
+
+  <div class="card">
+    <div class="meta">
+      <span class="badge">Heartbeat: 10s</span>
+      <span class="badge">Mode: Frontend Only</span>
+      <span class="badge" id="heartbeat-status">Waiting…</span>
+    </div>
+
+    <pre id="output">{}</pre>
+  </div>
+
+<script>
+(function () {
+
+  /* ------------------------------
+     CONFIG
+     ------------------------------ */
+  const HEARTBEAT_INTERVAL = 10_000;
+
+  /* ------------------------------
+     VISITOR ID
+     ------------------------------ */
+  function generateVisitorId() {
+    return (
+      "V" +
+      Date.now().toString(36).slice(-4).toUpperCase() +
+      Math.random().toString(36).slice(2, 6).toUpperCase()
+    );
+  }
+
+  let visitor_id = localStorage.getItem("visitor_id");
+  if (!visitor_id) {
+    visitor_id = generateVisitorId();
+    localStorage.setItem("visitor_id", visitor_id);
+  }
+
+  /* ------------------------------
+     SESSION START
+     ------------------------------ */
+  const session_started_at = new Date().toISOString();
+
+  /* ------------------------------
+     CURRENT URL
+     ------------------------------ */
+  function getCurrentUrl() {
+    return window.location.href;
+  }
+
+  /* ------------------------------
+     CITY (fetch once)
+     ------------------------------ */
+  let city = null;
+
+  (async function fetchCityOnce() {
+    try {
+      const res = await fetch("https://ipapi.co/json/", {
+        cache: "no-store",
+        mode: "cors"
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        city = typeof data.city === "string" ? data.city : null;
+      }
+    } catch {
+      city = null;
+    }
+  })();
+
+  /* ------------------------------
+     RENDER
+     ------------------------------ */
+  const outputEl = document.getElementById("output");
+  const statusEl = document.getElementById("heartbeat-status");
+
+  function render() {
+    const payload = {
+      visitor_id,
+      city,
+      current_url: getCurrentUrl(),
+      session_started_at,
+      heartbeat_at: new Date().toISOString()
+    };
+
+    outputEl.textContent = JSON.stringify(payload, null, 2);
+    statusEl.textContent = "Last heartbeat: " + new Date().toLocaleTimeString();
+  }
+
+  /* ------------------------------
+     HEARTBEAT (frontend only)
+     ------------------------------ */
+  render();
+  setInterval(render, HEARTBEAT_INTERVAL);
+
+})();
+</script>
+
+</body>
+</html>
