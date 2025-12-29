@@ -128,6 +128,17 @@
     letter-spacing: 0.15em;
   }
 
+  .pseudo-fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+    z-index: 9999;
+  }
+
+
   /* INVISIBLE RESIZE ZONES */
   .resize-zone {
     position: absolute;
@@ -225,13 +236,26 @@ window.addEventListener("pointermove", e => {
 window.addEventListener("pointerup", () => resizing = null);
 
 /* -------- FULLSCREEN (DOUBLE TAP) -------- */
+let pseudoFullscreen = false;
+
+function toggleFullscreen() {
+  pseudoFullscreen = !pseudoFullscreen;
+  widget.classList.toggle("pseudo-fullscreen", pseudoFullscreen);
+
+  if (pseudoFullscreen) {
+    widget.style.setProperty("--scale", window.innerWidth / 520);
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "";
+  }
+}
+
 let lastTap = 0;
-document.addEventListener("pointerdown", () => {
+
+widget.addEventListener("pointerdown", () => {
   const now = Date.now();
   if (now - lastTap < 300) {
-    document.fullscreenElement
-      ? document.exitFullscreen()
-      : document.documentElement.requestFullscreen?.();
+    toggleFullscreen();
   }
   lastTap = now;
 });
